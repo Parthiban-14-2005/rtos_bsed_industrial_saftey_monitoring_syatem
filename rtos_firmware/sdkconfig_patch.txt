@@ -1,0 +1,29 @@
+======================================================
+OPEN your sdkconfig file in VS Code and make these changes:
+======================================================
+
+FIND these lines (they may appear separately in the file):
+----------------------------------------------------------
+CONFIG_PARTITION_TABLE_SINGLE_APP=y
+
+REPLACE WITH:
+----------------------------------------------------------
+# CONFIG_PARTITION_TABLE_SINGLE_APP is not set
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0x8000
+
+------------------------------------------------------
+ALSO FIND:
+------------------------------------------------------
+CONFIG_PARTITION_TABLE_FILENAME="partitions/single_app.csv"
+
+REPLACE WITH:
+------------------------------------------------------
+CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"
+
+======================================================
+Save sdkconfig, then run:
+  idf.py build
+  idf.py -p COM3 flash monitor
+======================================================

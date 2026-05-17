@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ISMS — Industrial Safety Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060810;
+  --panel:#0b0d1c;
+  --card:#101325;
+  --card2:#131628;
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.50);
+  --dim:rgba(255,255,255,.28);
+  --neon:#00ffa3;
+  --neon2:#00d4ff;
+  --warn:#ffcc00;
+  --danger:#ff4155;
+  --purple:#b07fff;
+  --border:rgba(255,255,255,.07);
+  --r:12px;
+  --font:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --mono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* === TOPBAR === */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(6,8,16,.92);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  height:56px;
+  gap:12px;
+}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-weight:800;font-size:15px;letter-spacing:.5px;
+}
+.logo-icon{
+  width:34px;height:34px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.status-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;letter-spacing:.8px;
+  padding:5px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,65,85,.4);
+  background:rgba(255,65,85,.1);
+  color:var(--danger);
+  transition:.3s;
+  cursor:default;
+}
+.status-badge.online{
+  border-color:rgba(0,255,163,.4);
+  background:rgba(0,255,163,.08);
+  color:var(--neon);
+}
+.status-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.8s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* === LAYOUT === */
+.layout{
+  display:grid;
+  grid-template-columns:220px 1fr;
+  min-height:calc(100vh - 56px);
+}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.sidebar{display:none!important}}
+
+/* === SIDEBAR === */
+.sidebar{
+  background:rgba(11,13,28,.7);
+  border-right:1px solid var(--border);
+  padding:16px 12px;
+  position:sticky;
+  top:56px;
+  height:calc(100vh - 56px);
+  overflow-y:auto;
+  display:flex;flex-direction:column;
+  gap:3px;
+}
+.sidebar-section{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;
+  color:var(--dim);padding:12px 8px 6px;
+}
+.nav{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  border-radius:var(--r);
+  border:1px solid transparent;
+  color:var(--muted);
+  font-size:13px;font-weight:600;
+  cursor:pointer;
+  background:transparent;
+  width:100%;text-align:left;
+  transition:.15s;
+  position:relative;
+}
+.nav:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.nav.active{
+  background:rgba(0,255,163,.08);
+  border-color:rgba(0,255,163,.25);
+  color:var(--neon);
+}
+.nav .badge{
+  margin-left:auto;
+  background:var(--danger);
+  color:#fff;
+  font-size:10px;font-weight:800;
+  padding:2px 7px;border-radius:999px;
+  display:none;
+}
+.nav .badge.show{display:block}
+.nav-icon{font-size:16px;flex-shrink:0}
+.sidebar-bottom{margin-top:auto;padding-top:12px;border-top:1px solid var(--border)}
+
+/* === CONTENT === */
+.content{padding:20px 18px 80px;overflow-x:hidden}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* === CARDS === */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px;
+}
+.card + .card{margin-top:12px}
+.section-label{
+  font-size:11px;font-weight:700;letter-spacing:1.5px;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+
+/* === GRIDS === */
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(max-width:600px){.g2,.g3,.g4{grid-template-columns:1fr}}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}}
+
+/* === METRIC TILES === */
+.tile{
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:14px 14px 12px;
+  display:flex;flex-direction:column;gap:6px;
+  position:relative;overflow:hidden;
+}
+.tile::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent,var(--neon));
+  border-radius:2px 2px 0 0;
+}
+.tile-label{font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--muted)}
+.tile-value{font-size:22px;font-weight:800;font-family:var(--mono);color:var(--accent,var(--neon));line-height:1}
+.tile-sub{font-size:11px;color:var(--dim)}
+
+/* === STATUS INDICATOR === */
+.status-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.2);
+  margin-bottom:8px;
+}
+.status-row .label{font-size:12px;color:var(--muted)}
+.status-row .val{font-size:13px;font-weight:700;font-family:var(--mono)}
+.status-row:last-child{margin-bottom:0}
+
+/* === CHIP === */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.chip{
+  padding:8px 16px;border-radius:999px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.3);
+  font-size:12px;font-weight:700;
+  color:var(--muted);
+  transition:.2s;
+}
+.chip.on{
+  background:rgba(0,255,163,.12);
+  color:var(--neon);
+  border-color:rgba(0,255,163,.45);
+  box-shadow:0 0 14px rgba(0,255,163,.1);
+}
+.chip.warn{background:rgba(255,204,0,.12);color:var(--warn);border-color:rgba(255,204,0,.45)}
+.chip.danger{background:rgba(255,65,85,.12);color:var(--danger);border-color:rgba(255,65,85,.45)}
+
+/* === ALERTS === */
+.alert-item{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:12px;border-radius:10px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,.2);
+  margin-bottom:8px;
+  animation:fadeIn .2s ease;
+}
+.alert-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.alert-item.danger .alert-dot{background:var(--danger)}
+.alert-item.warning .alert-dot{background:var(--warn)}
+.alert-meta{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.alert-msg{font-size:13px;font-weight:600}
+
+/* === HISTORY TABLE === */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+.tbl th{
+  text-align:left;font-size:10px;letter-spacing:1.2px;font-weight:700;
+  color:var(--muted);padding:8px 10px;
+  border-bottom:1px solid var(--border);
+}
+.tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl tr.anomaly td:first-child{border-left:2px solid var(--danger)}
+.pill-sm{
+  display:inline-block;padding:2px 8px;border-radius:999px;
+  font-size:10px;font-weight:800;letter-spacing:.5px;
+}
+.pill-ok{background:rgba(0,255,163,.12);color:var(--neon)}
+.pill-warn{background:rgba(255,204,0,.14);color:var(--warn)}
+.pill-danger{background:rgba(255,65,85,.14);color:var(--danger)}
+
+/* === CANVAS CHARTS === */
+.chart-wrap{
+  background:rgba(0,0,0,.25);
+  border-radius:10px;padding:14px;
+  border:1px solid var(--border);
+}
+.chart-wrap canvas{width:100%!important;display:block}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* === PROGRESS BARS === */
+.progress-row{margin-bottom:12px}
+.progress-header{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.progress-header .pv{font-family:var(--mono);font-weight:700}
+.progress-track{height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;border-radius:999px;transition:width .6s ease;background:var(--neon)}
+
+/* === TOGGLE / SETTINGS === */
+.setting-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid var(--border);
+  gap:12px;
+}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:13px;font-weight:600}
+.setting-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.toggle{
+  position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer;
+}
+.toggle input{opacity:0;width:0;height:0}
+.slider{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(255,255,255,.15);border-radius:999px;
+  transition:.25s;
+}
+.slider::before{
+  content:'';position:absolute;
+  height:16px;width:16px;left:3px;bottom:3px;
+  background:#fff;border-radius:50%;
+  transition:.25s;
+}
+.toggle input:checked + .slider{background:var(--neon)}
+.toggle input:checked + .slider::before{transform:translateX(18px);background:#050a06}
+.input-field{
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px;
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:12px;
+  width:100%;margin-top:6px;
+  outline:none;
+  transition:.2s;
+}
+.input-field:focus{border-color:rgba(0,255,163,.4);background:rgba(0,255,163,.05)}
+.btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:10px;
+  background:var(--neon);color:#040d07;
+  border:none;cursor:pointer;font-weight:800;font-size:13px;
+  font-family:var(--font);
+  transition:.2s;
+}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-secondary{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:10px;
+  background:rgba(255,255,255,.07);color:var(--text);
+  border:1px solid var(--border);cursor:pointer;font-weight:700;font-size:13px;
+  font-family:var(--font);
+  transition:.2s;
+}
+.btn-secondary:hover{background:rgba(255,255,255,.12)}
+
+/* === SYSTEM BANNER === */
+.sys-banner{
+  border-radius:var(--r);padding:14px 16px;
+  border:1px solid rgba(0,255,163,.3);
+  background:rgba(0,255,163,.07);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  margin-bottom:16px;
+}
+.sys-banner.warn{border-color:rgba(255,204,0,.35);background:rgba(255,204,0,.07)}
+.sys-banner.danger{border-color:rgba(255,65,85,.35);background:rgba(255,65,85,.07)}
+.banner-state{font-size:16px;font-weight:800}
+
+/* === RTOS TASK TABLE === */
+.task-row{
+  display:grid;
+  grid-template-columns: 130px 70px 70px 70px 1fr;
+  gap:8px;align-items:center;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:12px;font-family:var(--mono);
+  border:1px solid transparent;
+  margin-bottom:6px;
+}
+.task-row:hover{background:rgba(255,255,255,.03)}
+.task-row.header{color:var(--muted);font-size:10px;letter-spacing:1px;font-weight:700;padding-bottom:8px}
+.task-bar-bg{height:4px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+.task-bar-fill{height:100%;background:var(--neon);border-radius:999px}
+
+/* === SPARKLINE === */
+.sparkline{display:inline-block;vertical-align:middle}
+
+/* === FOOTER NAV (mobile) === */
+.footer-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(6,8,16,.95);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  padding:8px 8px;
+  display:none;
+  z-index:99;
+}
+@media(max-width:860px){.footer-nav{display:block}}
+.footer-row{display:flex;gap:6px;justify-content:space-around}
+.foot-btn{
+  flex:1;padding:9px 6px;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--muted);
+  font-family:var(--font);
+  font-size:11px;font-weight:700;
+  cursor:pointer;
+  transition:.15s;
+}
+.foot-btn.active{border-color:rgba(0,255,163,.35);background:rgba(0,255,163,.08);color:var(--neon)}
+
+/* === ABOUT PAGE === */
+.about-logo{
+  width:72px;height:72px;
+  background:linear-gradient(135deg,var(--neon),var(--neon2));
+  border-radius:20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  margin:0 auto 16px;
+}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tag{
+  padding:5px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;font-family:var(--mono);
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.04);
+  color:var(--muted);
+}
+
+/* === MISC === */
+.spacer{height:12px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ml-auto{margin-left:auto}
+.text-neon{color:var(--neon)}
+.text-warn{color:var(--warn)}
+.text-danger{color:var(--danger)}
+.text-blue{color:var(--neon2)}
+.text-purple{color:var(--purple)}
+.fw8{font-weight:800}
+.mono{font-family:var(--mono)}
+.fs12{font-size:12px}
+.fs11{font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    <div>
+      <div style="font-size:14px;font-weight:800">ISMS</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px">Industrial Safety Monitor</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono)" id="top-time">--:--:--</div>
+    <div class="status-badge" id="globalBadge">
+      <span class="status-dot"></span>
+      <span id="globalBadgeText">OFFLINE</span>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">MONITORING</div>
+    <button class="nav active" data-route="dashboard"><span class="nav-icon">📊</span> Dashboard</button>
+    <button class="nav" data-route="live"><span class="nav-icon">📡</span> Live Feed</button>
+    <button class="nav" data-route="history"><span class="nav-icon">🕒</span> History</button>
+    <button class="nav" data-route="alerts"><span class="nav-icon">⚠️</span> Alerts <span class="badge" id="alertsBadge">0</span></button>
+    <div class="sidebar-section">ANALYTICS</div>
+    <button class="nav" data-route="analytics"><span class="nav-icon">📈</span> Analytics</button>
+    <button class="nav" data-route="analysis"><span class="nav-icon">🧠</span> AI Analysis</button>
+    <div class="sidebar-section">SYSTEM</div>
+    <button class="nav" data-route="rtos"><span class="nav-icon">⏱️</span> RTOS Tasks</button>
+    <button class="nav" data-route="system_status"><span class="nav-icon">🧩</span> System Status</button>
+    <button class="nav" data-route="device_connection"><span class="nav-icon">📶</span> Device</button>
+    <button class="nav" data-route="settings"><span class="nav-icon">⚙️</span> Settings</button>
+    <div class="sidebar-bottom">
+      <button class="nav" data-route="about"><span class="nav-icon">ℹ️</span> About</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section class="page active" data-page="dashboard">
+      <div class="sys-banner" id="db_banner">
+        <span style="font-size:20px" id="db_banner_icon">🟢</span>
+        <div>
+          <div class="banner-state" id="db_state">System: NORMAL</div>
+          <div style="font-size:11px;color:var(--muted)" id="db_uptime">Uptime: 0 s</div>
+        </div>
+        <div class="ml-auto">
+          <button class="btn-primary" id="connectBtn" style="padding:8px 16px;font-size:12px">🔌 Connect MQTT</button>
+        </div>
+      </div>
+
+      <!-- KPI tiles -->
+      <div class="g4">
+        <div class="tile" style="--accent:var(--neon)">
+          <div class="tile-label">TEMPERATURE</div>
+          <div class="tile-value" id="db_temp">--°C</div>
+          <div class="tile-sub">DS3231 RTC Sensor</div>
+        </div>
+        <div class="tile" style="--accent:var(--warn)">
+          <div class="tile-label">GAS (MQ-2)</div>
+          <div class="tile-value" id="db_gas">-- ppm</div>
+          <div class="tile-sub">Warn &gt;300 · Crit &gt;500</div>
+        </div>
+        <div class="tile" style="--accent:var(--purple)">
+          <div class="tile-label">NOISE ADC</div>
+          <div class="tile-value" id="db_noise">--</div>
+          <div class="tile-sub">GPIO 33 · ADC1_CH5</div>
+        </div>
+        <div class="tile" style="--accent:var(--neon2)">
+          <div class="tile-label">RISK SCORE</div>
+          <div class="tile-value" id="db_risk">--</div>
+          <div class="tile-sub">Composite safety index</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="section-label">DIGITAL SENSORS</div>
+          <div class="status-row"><span class="label">PIR Motion</span><span class="val" id="db_motion">—</span></div>
+          <div class="status-row"><span class="label">Door Switch</span><span class="val" id="db_door">—</span></div>
+          <div class="status-row"><span class="label">Vibration</span><span class="val" id="db_vibration">—</span></div>
+          <div class="status-row"><span class="label">RTC Time</span><span class="val" id="db_rtc_time">--:--:--</span></div>
+          <div class="status-row"><span class="label">RTC Date</span><span class="val" id="db_rtc_date">--/--/----</span></div>
+        </div>
+        <div class="card">
+          <div class="section-label">ACTUATORS & CONTROLS</div>
+          <div style="margin-bottom:12px" class="chips">
+            <div class="chip" id="ch_buzzer">🔔 Buzzer</div>
+            <div class="chip" id="ch_fan">🌀 Fan Relay</div>
+            <div class="chip" id="ch_btn1">🔘 Button 1</div>
+            <div class="chip" id="ch_btn2">🔘 Button 2</div>
+          </div>
+          <div class="section-label" style="margin-top:12px">SYSTEM RESOURCES</div>
+          <div class="progress-row">
+            <div class="progress-header"><span>CPU Usage</span><span class="pv" id="db_cpu_pct">--%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="db_cpu_bar" style="width:0%;background:var(--neon2)"></div></div>
+          </div>
+          <div class="progress-row">
+            <div class="progress-header"><span>Free Heap</span><span class="pv" id="db_heap_pct">-- KB</span></div>
+            <div class="progress-track"><div class="progress-fill" id="db_heap_bar" style="width:60%;background:var(--neon)"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">MQTT / NETWORK</div>
+        <div class="g3">
+          <div class="status-row"><span class="label">Broker</span><span class="val mono fs12" id="db_broker">192.168.4.1:1883</span></div>
+          <div class="status-row"><span class="label">Topic</span><span class="val mono fs12" id="db_topic">industrial/system</span></div>
+          <div class="status-row"><span class="label">Firmware</span><span class="val mono fs12" id="db_fw">v10.1.0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LIVE FEED ===== -->
+    <section class="page" data-page="live">
+      <div class="card">
+        <div class="section-label">LIVE SENSOR STREAM</div>
+        <div class="g4" style="margin-bottom:12px">
+          <div class="tile" style="--accent:var(--neon)"><div class="tile-label">TEMP</div><div class="tile-value" id="lv_temp">--°C</div><div class="tile-sub" id="lv_temp_status">Nominal</div></div>
+          <div class="tile" style="--accent:var(--warn)"><div class="tile-label">GAS</div><div class="tile-value" id="lv_gas">-- ppm</div><div class="tile-sub" id="lv_gas_status">Nominal</div></div>
+          <div class="tile" style="--accent:var(--purple)"><div class="tile-label">NOISE</div><div class="tile-value" id="lv_noise">--</div><div class="tile-sub" id="lv_noise_status">Nominal</div></div>
+          <div class="tile" style="--accent:var(--neon2)"><div class="tile-label">CPU</div><div class="tile-value" id="lv_cpu">--%</div><div class="tile-sub">RTOS load</div></div>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-label">REAL-TIME: TEMPERATURE + GAS + NOISE</div>
+          <canvas id="lv_chart" height="180"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--neon)"></div>Gas (ppm)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--neon2)"></div>Temperature (°C)</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Noise</div>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">RAW MQTT PAYLOAD (simulated)</div>
+        <pre id="lv_json" style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.7;overflow-x:auto;white-space:pre-wrap">Waiting for data...</pre>
+      </div>
+    </section>
+
+    <!-- ===== HISTORY ===== -->
+    <section class="page" data-page="history">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <div class="section-label" style="margin-bottom:0">EVENT LOG (last 60 records)</div>
+          <div class="ml-auto"><button class="btn-secondary" onclick="clearHistory()" style="padding:6px 14px;font-size:11px">🗑 Clear</button></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr>
+              <th>TIME</th><th>TEMP</th><th>GAS</th><th>NOISE</th><th>MOTION</th><th>DOOR</th><th>STATUS</th>
+            </tr></thead>
+            <tbody id="history_tbody"><tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No data yet. Connect to start logging.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ALERTS ===== -->
+    <section class="page" data-page="alerts">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <div class="section-label" style="margin-bottom:0">ALERT HISTORY</div>
+          <div class="ml-auto row" style="gap:8px">
+            <span style="font-size:11px;color:var(--muted)" id="alert_count">0 alerts</span>
+            <button class="btn-secondary" onclick="clearAlerts()" style="padding:6px 14px;font-size:11px">🗑 Clear</button>
+          </div>
+        </div>
+        <div id="alerts_list"><div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No alerts triggered yet.</div></div>
+      </div>
+    </section>
+
+    <!-- ===== ANALYTICS ===== -->
+    <section class="page" data-page="analytics">
+      <div class="g4" style="margin-bottom:12px">
+        <div class="tile" style="--accent:var(--neon)"><div class="tile-label">AVG TEMP (1min)</div><div class="tile-value" id="an_avg_temp">--°C</div></div>
+        <div class="tile" style="--accent:var(--warn)"><div class="tile-label">PEAK GAS</div><div class="tile-value" id="an_peak_gas">-- ppm</div></div>
+        <div class="tile" style="--accent:var(--purple)"><div class="tile-label">NOISE EVENTS</div><div class="tile-value" id="an_noise_events">--</div></div>
+        <div class="tile" style="--accent:var(--danger)"><div class="tile-label">TOTAL ALERTS</div><div class="tile-value" id="an_total_alerts">--</div></div>
+      </div>
+      <div class="g2">
+        <div class="chart-wrap">
+          <div class="section-label">TEMPERATURE TREND (60 points)</div>
+          <canvas id="an_temp_chart" height="180"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--neon)"></div>Temperature °C</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-label">GAS TREND (60 points)</div>
+          <canvas id="an_gas_chart" height="180"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div>Gas ppm</div>
+          </div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="chart-wrap">
+        <div class="section-label">NOISE TREND (60 points)</div>
+        <canvas id="an_noise_chart" height="140"></canvas>
+      </div>
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">SENSOR DISTRIBUTION</div>
+        <div class="g3">
+          <div>
+            <div class="progress-header fs12"><span>Temperature</span><span class="pv" id="an_t_pct">--%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="an_t_bar" style="width:0%;background:var(--neon)"></div></div>
+          </div>
+          <div>
+            <div class="progress-header fs12"><span>Gas Level</span><span class="pv" id="an_g_pct">--%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="an_g_bar" style="width:0%;background:var(--warn)"></div></div>
+          </div>
+          <div>
+            <div class="progress-header fs12"><span>Noise Level</span><span class="pv" id="an_n_pct">--%</span></div>
+            <div class="progress-track"><div class="progress-fill" id="an_n_bar" style="width:0%;background:var(--purple)"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AI ANALYSIS ===== -->
+    <section class="page" data-page="analysis">
+      <div class="g4" style="margin-bottom:12px">
+        <div class="tile" style="--accent:var(--danger)"><div class="tile-label">RISK SCORE</div><div class="tile-value" id="a_risk">--/100</div><div class="tile-sub">Composite index</div></div>
+        <div class="tile" style="--accent:var(--warn)"><div class="tile-label">TREND</div><div class="tile-value" id="a_trend" style="font-size:14px">--</div><div class="tile-sub">Last 10 samples</div></div>
+        <div class="tile" style="--accent:var(--neon2)"><div class="tile-label">TOP FACTOR</div><div class="tile-value" id="a_factor" style="font-size:16px">--</div></div>
+        <div class="tile" style="--accent:var(--neon)"><div class="tile-label">CONFIDENCE</div><div class="tile-value" id="a_conf">--</div></div>
+      </div>
+
+      <div class="g2">
+        <div class="chart-wrap">
+          <div class="section-label">TEMP + GAS OVERLAY</div>
+          <canvas id="ch_temp_gas" height="200"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--neon)"></div>Gas ppm</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--neon2)"></div>Temp °C</div>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-label">NOISE WAVEFORM</div>
+          <canvas id="ch_noise" height="200"></canvas>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Noise ADC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="chart-wrap">
+        <div class="section-label">RISK SCORE HISTORY</div>
+        <canvas id="ch_risk" height="120"></canvas>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">AUTO RECOMMENDATIONS</div>
+        <div id="a_reco" style="font-size:13px;line-height:1.8;color:var(--muted)">Waiting for live data...</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">ML MODEL STATUS</div>
+        <div class="g3">
+          <div class="status-row"><span class="label">Model</span><span class="val text-neon">Decision Tree</span></div>
+          <div class="status-row"><span class="label">Features</span><span class="val">7 (T,G,ΔT,CPU,Tex,Heap,Hrs)</span></div>
+          <div class="status-row"><span class="label">Classes</span><span class="val">Normal · Warning · Degrading · Risk · Critical · Fire_Risk</span></div>
+          <div class="status-row"><span class="label">Inference</span><span class="val text-neon">Browser JS (real-time)</span></div>
+          <div class="status-row"><span class="label">ML Prediction</span>
+            <span class="val" id="ml_pred" style="font-weight:700">--</span></div>
+          <div class="status-row"><span class="label">Confidence</span>
+            <span class="val mono" id="ml_conf">--</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== RTOS TASKS ===== -->
+    <section class="page" data-page="rtos">
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label">FREERTOS TASK MONITOR</div>
+        <div class="task-row header">
+          <span>TASK NAME</span><span>PRIORITY</span><span>STATE</span><span>STACK</span><span>CPU %</span>
+        </div>
+        <div id="rtos_tasks"></div>
+      </div>
+      <div class="g2">
+        <div class="chart-wrap">
+          <div class="section-label">CPU USAGE HISTORY</div>
+          <canvas id="rtos_cpu_chart" height="160"></canvas>
+        </div>
+        <div class="chart-wrap">
+          <div class="section-label">FREE HEAP HISTORY</div>
+          <canvas id="rtos_heap_chart" height="160"></canvas>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">SCHEDULER STATS</div>
+        <div class="g4">
+          <div class="status-row"><span class="label">Tick Rate</span><span class="val mono">1000 Hz</span></div>
+          <div class="status-row"><span class="label">Context Sw/s</span><span class="val mono" id="rtos_ctx">--</span></div>
+          <div class="status-row"><span class="label">I2C Mutex</span><span class="val text-neon">ACTIVE</span></div>
+          <div class="status-row"><span class="label">Queue Depth</span><span class="val mono">10 items</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SYSTEM STATUS ===== -->
+    <section class="page" data-page="system_status">
+      <div class="g4" style="margin-bottom:12px">
+        <div class="tile" style="--accent:var(--neon2)"><div class="tile-label">FREE HEAP</div><div class="tile-value" id="ss_heap">-- KB</div></div>
+        <div class="tile" style="--accent:var(--neon)"><div class="tile-label">CPU USAGE</div><div class="tile-value" id="ss_cpu">--%</div></div>
+        <div class="tile" style="--accent:var(--warn)"><div class="tile-label">UPTIME</div><div class="tile-value" id="ss_uptime" style="font-size:16px">-- s</div></div>
+        <div class="tile" style="--accent:var(--purple)"><div class="tile-label">SYS STATE</div><div class="tile-value" id="ss_state" style="font-size:14px">--</div></div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="section-label">ESP32 HARDWARE</div>
+          <div class="status-row"><span class="label">MCU</span><span class="val">ESP32-WROOM-32</span></div>
+          <div class="status-row"><span class="label">Framework</span><span class="val text-neon">ESP-IDF v5.3.1</span></div>
+          <div class="status-row"><span class="label">RTOS</span><span class="val">FreeRTOS v10</span></div>
+          <div class="status-row"><span class="label">Dual-core</span><span class="val">240 MHz</span></div>
+          <div class="status-row"><span class="label">Flash</span><span class="val">4 MB</span></div>
+          <div class="status-row"><span class="label">PSRAM</span><span class="val">None</span></div>
+        </div>
+        <div class="card">
+          <div class="section-label">CONNECTED SENSORS</div>
+          <div class="status-row"><span class="label">DS3231 RTC</span><span class="val text-neon">I2C @ 0x68</span></div>
+          <div class="status-row"><span class="label">SSD1306 OLED</span><span class="val text-neon">I2C @ 0x3C</span></div>
+          <div class="status-row"><span class="label">MQ-2 Gas</span><span class="val">GPIO 34 ADC</span></div>
+          <div class="status-row"><span class="label">PIR Sensor</span><span class="val">GPIO 25</span></div>
+          <div class="status-row"><span class="label">Door Switch</span><span class="val">GPIO 26</span></div>
+          <div class="status-row"><span class="label">Vibration</span><span class="val">GPIO 27</span></div>
+          <div class="status-row"><span class="label">Noise ADC</span><span class="val">GPIO 33</span></div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">GPIO ACTUATOR MAP</div>
+        <div class="g4">
+          <div class="status-row"><span class="label">Buzzer</span><span class="val mono">GPIO 14</span></div>
+          <div class="status-row"><span class="label">Siren</span><span class="val mono">GPIO 13</span></div>
+          <div class="status-row"><span class="label">Fan Relay</span><span class="val mono">GPIO 15</span></div>
+          <div class="status-row"><span class="label">Exhaust</span><span class="val mono">GPIO 16</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== DEVICE CONNECTION ===== -->
+    <section class="page" data-page="device_connection">
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label">MQTT CONFIGURATION</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Broker IP</div><div class="setting-sub">ESP32 SoftAP address</div></div>
+          <input class="input-field" id="cfg_broker" value="192.168.4.1" style="width:160px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Port</div><div class="setting-sub">Default MQTT port</div></div>
+          <input class="input-field" id="cfg_port" value="1883" style="width:100px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Topic</div><div class="setting-sub">Subscribe filter</div></div>
+          <input class="input-field" id="cfg_topic" value="industrial/#" style="width:160px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Client ID</div></div>
+          <input class="input-field" id="cfg_clientid" value="isms_web_ui" style="width:160px;margin-top:0">
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn-primary" onclick="connectMQTT()">🔌 Connect</button>
+          <button class="btn-secondary" onclick="disconnectMQTT()">⏏ Disconnect</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">CONNECTION STATUS</div>
+        <div class="status-row"><span class="label">Status</span><span class="val" id="dc_status">OFFLINE</span></div>
+        <div class="status-row"><span class="label">Broker</span><span class="val mono" id="dc_broker">—</span></div>
+        <div class="status-row"><span class="label">Last Packet</span><span class="val mono" id="dc_last_packet">—</span></div>
+        <div class="status-row"><span class="label">Packets Rx</span><span class="val mono" id="dc_packets">0</span></div>
+        <div class="status-row"><span class="label">WiFi Mode</span><span class="val">APSTA</span></div>
+        <div class="status-row"><span class="label">LWT Topic</span><span class="val mono">isms/status</span></div>
+      </div>
+
+      <div class="spacer"></div>
+      <div class="card">
+        <div class="section-label">ESP32 WIFI — SOFTAP MODE</div>
+        <div class="status-row"><span class="label">SSID</span><span class="val mono">ESP32_ISMS_AP</span></div>
+        <div class="status-row"><span class="label">IP Gateway</span><span class="val mono">192.168.4.1</span></div>
+        <div class="status-row"><span class="label">Channel</span><span class="val mono">6</span></div>
+        <div class="status-row"><span class="label">Max Clients</span><span class="val mono">4</span></div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section class="page" data-page="settings">
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label">THRESHOLD CONFIGURATION</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Gas Warning Threshold</div><div class="setting-sub">ppm — triggers yellow alert</div></div>
+          <input class="input-field" id="th_gas_warn" value="300" type="number" style="width:100px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Gas Critical Threshold</div><div class="setting-sub">ppm — triggers red alert + actuators</div></div>
+          <input class="input-field" id="th_gas_crit" value="500" type="number" style="width:100px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Temp Warning</div><div class="setting-sub">°C — warning level</div></div>
+          <input class="input-field" id="th_temp_warn" value="50" type="number" style="width:100px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Temp Critical</div><div class="setting-sub">°C — critical level</div></div>
+          <input class="input-field" id="th_temp_crit" value="70" type="number" style="width:100px;margin-top:0">
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Noise Threshold</div><div class="setting-sub">ADC raw value</div></div>
+          <input class="input-field" id="th_noise" value="2500" type="number" style="width:100px;margin-top:0">
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="section-label">NOTIFICATIONS</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Enable Alert Sound</div><div class="setting-sub">Play audio on alert</div></div>
+          <label class="toggle"><input type="checkbox" id="set_sound" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Firebase Push</div><div class="setting-sub">Send alerts to Firebase RTDB</div></div>
+          <label class="toggle"><input type="checkbox" id="set_firebase" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Auto-Reconnect</div><div class="setting-sub">Reconnect MQTT on disconnect</div></div>
+          <label class="toggle"><input type="checkbox" id="set_auto" checked><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Dark Mode</div></div>
+          <label class="toggle"><input type="checkbox" checked disabled><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">FIRMWARE / DEVICE</div>
+        <div class="status-row"><span class="label">Firmware Version</span><span class="val mono text-neon">v10.1.0</span></div>
+        <div class="status-row"><span class="label">Build Date</span><span class="val mono">May 2026</span></div>
+        <div class="status-row"><span class="label">IDF Version</span><span class="val mono">v5.3.1</span></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" style="background:var(--warn);color:#1a1200">💾 Save Settings</button>
+          <button class="btn-secondary">↩ Reset Defaults</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ABOUT ===== -->
+    <section class="page" data-page="about">
+      <div class="card" style="text-align:center;padding:32px 20px;margin-bottom:12px">
+        <div class="about-logo">🛡️</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:6px">ISMS Web Dashboard</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Industrial Safety Monitoring System</div>
+        <div style="font-size:12px;color:var(--dim);font-family:var(--mono)">v10.1.0 · ESP32 / FreeRTOS / MQTT / Firebase</div>
+        <div class="tag-row" style="justify-content:center;margin-top:16px">
+          <span class="tag">ESP-IDF v5.3.1</span>
+          <span class="tag">FreeRTOS</span>
+          <span class="tag">MQTT</span>
+          <span class="tag">Firebase RTDB</span>
+          <span class="tag">SoftAP</span>
+          <span class="tag">DS3231</span>
+          <span class="tag">MQ-2</span>
+          <span class="tag">SSD1306</span>
+          <span class="tag">Flutter</span>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="section-label">PROJECT INFO</div>
+          <div class="status-row"><span class="label">Developer</span><span class="val text-neon">Raja (ECE Final Year)</span></div>
+          <div class="status-row"><span class="label">Organization</span><span class="val">Lakshmi Industrial Automation</span></div>
+          <div class="status-row"><span class="label">Location</span><span class="val">Thoothukudi, India</span></div>
+          <div class="status-row"><span class="label">Year</span><span class="val mono">2026</span></div>
+        </div>
+        <div class="card">
+          <div class="section-label">ARCHITECTURE</div>
+          <div class="status-row"><span class="label">SensorTask</span><span class="val text-neon">Priority 4</span></div>
+          <div class="status-row"><span class="label">SecurityTask</span><span class="val">Priority 3</span></div>
+          <div class="status-row"><span class="label">SafetyTask</span><span class="val">Priority 3</span></div>
+          <div class="status-row"><span class="label">CommTask (MQTT)</span><span class="val">Priority 2</span></div>
+          <div class="status-row"><span class="label">OledTask</span><span class="val">Priority 1</span></div>
+          <div class="status-row"><span class="label">FirebaseTask</span><span class="val">Priority 2</span></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MOBILE FOOTER NAV -->
+<nav class="footer-nav">
+  <div class="footer-row">
+    <button class="foot-btn active" data-route="dashboard">📊 Dash</button>
+    <button class="foot-btn" data-route="live">📡 Live</button>
+    <button class="foot-btn" data-route="alerts">⚠️ Alerts</button>
+    <button class="foot-btn" data-route="analytics">📈 Stats</button>
+    <button class="foot-btn" data-route="analysis">🧠 AI</button>
+  </div>
+</nav>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  online: false,
+  uptime: 0,
+  systemState: 'normal',
+  sensors: {
+    temp:36.4, gas:220, noise:2100,
+    motion:0, door:0, vibration:0,
+    button1:0, button2:0,
+    buzzer:0, fanRelay:0, siren:0, exhaust:0,
+    heapKB:128.2, cpuUsage:42.6
+  },
+  history: [],
+  alerts: [],
+  packetsRx: 0,
+  lastPacketTime: null,
+  thresholds: { gasWarn:300, gasCrit:500, tempWarn:50, tempCrit:70, noise:2500 }
+};
+
+// Ring buffers for charts
+const buf = {
+  temp:[], gas:[], noise:[], risk:[],
+  cpu:[], heap:[],
+  MAX:60
+};
+
+function pushBuf(v, arr){ arr.push(v); if(arr.length > buf.MAX) arr.shift(); }
+
+// ============================================================
+// UTILS
+// ============================================================
+const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
+
+function seededRand(seed){
+  let x = seed|0;
+  return ()=>{ x^=x<<13; x^=x>>17; x^=x<<5; return (x>>>0)/4294967296; };
+}
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtTime(d){ return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+function fmtDate(d){
+  const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+
+// ============================================================
+// RISK COMPUTATION
+// ============================================================
+function computeRisk(t,g,n){
+  const tS = clamp((t-20)/(70-20),0,1);
+  const gS = clamp((g-40)/(500-40),0,1);
+  const nS = clamp((n-500)/(4000-500),0,1);
+  const raw = tS*0.28 + gS*0.42 + nS*0.30;
+  const risk = Math.round(raw*100);
+  let top='TEMP', max=tS;
+  if(gS>max){max=gS;top='GAS';}
+  if(nS>max){max=nS;top='NOISE';}
+  return {risk, tS, gS, nS, top, conf:clamp((tS+gS+nS)/3*0.9+0.1,0,0.99)};
+}
+
+// ============================================================
+// SIMULATION
+// ============================================================
+function simTick(){
+  const rand = seededRand((Date.now()+state.uptime*9999)>>>0);
+  const spike = rand()>0.88;
+  const s = state.sensors;
+  s.temp = clamp(s.temp+(rand()-0.5)*1.6+(spike?12*rand():0), 20, 90);
+  s.gas  = clamp(s.gas +(rand()-0.5)*35 +(spike?260*rand():0), 40, 900);
+  s.noise= clamp(s.noise+(rand()-0.5)*220+(spike?2200*rand():0), 500, 6000);
+  s.motion = rand()>0.83?1:(rand()>0.5?s.motion:0);
+  s.door   = rand()>0.85?1:(rand()>0.5?s.door:0);
+  s.vibration=rand()>0.86?1:(rand()>0.6?s.vibration:0);
+  s.button1= rand()>0.9?1:s.button1; if(rand()>0.7) s.button1=0;
+  s.button2= rand()>0.92?1:s.button2; if(rand()>0.74) s.button2=0;
+  const anom = s.gas>state.thresholds.gasWarn || s.temp>state.thresholds.tempWarn || s.noise>state.thresholds.noise;
+  const crit = s.gas>state.thresholds.gasCrit || s.temp>state.thresholds.tempCrit;
+  state.systemState = crit?'critical':(anom?'warning':'normal');
+  s.buzzer = anom&&rand()>0.45?1:0;
+  s.fanRelay = s.gas>state.thresholds.gasWarn&&rand()>0.3?1:0;
+  s.siren = crit&&rand()>0.5?1:0;
+  s.exhaust = anom&&rand()>0.6?1:0;
+  s.cpuUsage = clamp(s.cpuUsage+(rand()-0.5)*9+(spike?18:0), 0, 100);
+  s.heapKB   = clamp(s.heapKB+(rand()-0.5)*5-(anom?2:0), 50, 220);
+  state.uptime++;
+  state.packetsRx++;
+  state.lastPacketTime = new Date();
+
+  const {risk,tS,gS,nS,top,conf} = computeRisk(s.temp,s.gas,s.noise);
+  pushBuf(s.temp, buf.temp);
+  pushBuf(s.gas,  buf.gas);
+  pushBuf(s.noise,buf.noise);
+  pushBuf(risk,   buf.risk);
+  pushBuf(s.cpuUsage,buf.cpu);
+  pushBuf(s.heapKB, buf.heap);
+
+  // History record
+  const h = {
+    t: new Date(), temp:s.temp, gas:s.gas, noise:s.noise,
+    motion:s.motion, door:s.door, vib:s.vibration,
+    state:state.systemState
+  };
+  state.history.unshift(h);
+  if(state.history.length>60) state.history.pop();
+
+  // Alerts
+  if(anom||crit){
+    state.alerts.unshift({
+      id:Date.now(), t:new Date(),
+      severity:crit?'danger':'warning',
+      sensor:top, msg:crit?'Critical threshold breached':(s.gas>state.thresholds.gasWarn?'Gas warning':'Threshold warning'),
+      temp:s.temp, gas:s.gas
+    });
+    if(state.alerts.length>30) state.alerts.pop();
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function txt(id, v){ const e=document.getElementById(id); if(e) e.textContent=v; }
+function colorForState(s){ return s==='critical'?'var(--danger)':s==='warning'?'var(--warn)':'var(--neon)'; }
+
+function renderDashboard(){
+  const s = state.sensors;
+  const {risk} = computeRisk(s.temp,s.gas,s.noise);
+  txt('db_temp', s.temp.toFixed(1)+'°C');
+  txt('db_gas',  Math.round(s.gas)+' ppm');
+  txt('db_noise',Math.round(s.noise));
+  txt('db_risk', risk+'/100');
+  txt('db_motion', s.motion?'DETECTED':'CLEAR');
+  txt('db_door',   s.door?'OPEN':'CLOSED');
+  txt('db_vibration', s.vibration?'DETECTED':'STABLE');
+  txt('db_cpu_pct', s.cpuUsage.toFixed(1)+'%');
+  txt('db_heap_pct', s.heapKB.toFixed(1)+' KB');
+  txt('db_uptime', `Uptime: ${state.uptime} s`);
+  const bar = e=>document.getElementById(e);
+  const cpuBar = bar('db_cpu_bar'); if(cpuBar) cpuBar.style.width=s.cpuUsage.toFixed(1)+'%';
+  const hpBar = bar('db_heap_bar'); if(hpBar) hpBar.style.width=(s.heapKB/220*100).toFixed(1)+'%';
+
+  // Banner
+  const banner = document.getElementById('db_banner');
+  const stateColor = colorForState(state.systemState);
+  if(banner){
+    banner.className = 'sys-banner'+(state.systemState==='critical'?' danger':state.systemState==='warning'?' warn':'');
+    txt('db_state', 'System: '+state.systemState.toUpperCase());
+    txt('db_banner_icon', state.systemState==='critical'?'🔴':state.systemState==='warning'?'🟡':'🟢');
+  }
+
+  // Chips — actuator status + button press indicators
+  const chipSet=(id,on,cls='on')=>{const c=document.getElementById(id); if(c){c.className='chip'+(on?' '+cls:'')}};
+  chipSet('ch_buzzer',   s.buzzer);      // Buzzer actuator state (glow when ON)
+  chipSet('ch_fan',      s.fan);         // Fan relay state (glow when ON)
+  chipSet('ch_btn1',     s.button1);     // Button1 press indicator (glow when PRESSED)
+  chipSet('ch_btn2',     s.button2);     // Button2 press indicator (glow when PRESSED)
+}
+
+function renderBadge(){
+  const b = document.getElementById('globalBadge');
+  const t = document.getElementById('globalBadgeText');
+  if(b) b.className='status-badge'+(state.online?' online':'');
+  if(t) t.textContent=state.online?'ONLINE':'OFFLINE';
+  const cb = document.getElementById('connectBtn');
+  if(cb) cb.style.display = state.online?'none':'inline-flex';
+}
+
+function renderLiveFeed(){
+  const s = state.sensors;
+  txt('lv_temp', s.temp.toFixed(1)+'°C');
+  txt('lv_gas',  Math.round(s.gas)+' ppm');
+  txt('lv_noise',Math.round(s.noise));
+  txt('lv_cpu',  s.cpuUsage.toFixed(1)+'%');
+  const gs=(id,v,w,c)=>{ const e=document.getElementById(id); if(e){e.textContent=v;e.style.color=c||'';} };
+  gs('lv_temp_status', s.temp>state.thresholds.tempCrit?'🔴 CRITICAL':s.temp>state.thresholds.tempWarn?'🟡 WARNING':'🟢 Nominal', null, s.temp>state.thresholds.tempCrit?'var(--danger)':s.temp>state.thresholds.tempWarn?'var(--warn)':'var(--muted)');
+  gs('lv_gas_status',  s.gas>state.thresholds.gasCrit?'🔴 CRITICAL':s.gas>state.thresholds.gasWarn?'🟡 WARNING':'🟢 Nominal', null, s.gas>state.thresholds.gasCrit?'var(--danger)':s.gas>state.thresholds.gasWarn?'var(--warn)':'var(--muted)');
+  gs('lv_noise_status',s.noise>state.thresholds.noise?'🟡 WARNING':'🟢 Nominal', null, s.noise>state.thresholds.noise?'var(--warn)':'var(--muted)');
+
+  // JSON payload
+  const pj = document.getElementById('lv_json');
+  if(pj){
+    const payload = {
+      timestamp: new Date().toISOString(),
+      temp: s.temp.toFixed(2),
+      gas: Math.round(s.gas),
+      noise: Math.round(s.noise),
+      pir: s.motion,
+      door: s.door,
+      vibration: s.vibration,
+      buzzer: s.buzzer,
+      fan_relay: s.fanRelay,
+      cpu_usage: s.cpuUsage.toFixed(1),
+      free_heap_kb: s.heapKB.toFixed(1),
+      system_state: state.systemState
+    };
+    pj.textContent = JSON.stringify(payload, null, 2);
+  }
+
+  drawChart({canvas:document.getElementById('lv_chart'),
+    series:[buf.gas, buf.temp, buf.noise],
+    colors:['rgba(0,255,163,.9)','rgba(0,212,255,.9)','rgba(176,127,255,.7)'],
+    yDomain:[0,6000], gridY:4
+  });
+}
+
+function renderHistory(){
+  const tbody = document.getElementById('history_tbody');
+  if(!tbody) return;
+  if(state.history.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No data yet.</td></tr>';
+    return;
+  }
+  const rows = state.history.slice(0,40).map(h=>{
+    const cls = h.state==='critical'?'anomaly':'';
+    const pill = h.state==='critical'?'pill-danger':h.state==='warning'?'pill-warn':'pill-ok';
+    return `<tr class="${cls}">
+      <td>${fmtTime(h.t)}</td>
+      <td>${h.temp.toFixed(1)}°C</td>
+      <td>${Math.round(h.gas)} ppm</td>
+      <td>${Math.round(h.noise)}</td>
+      <td>${h.motion?'<span class="pill-sm pill-warn">YES</span>':'—'}</td>
+      <td>${h.door?'<span class="pill-sm pill-warn">OPEN</span>':'—'}</td>
+      <td><span class="pill-sm ${pill}">${h.state.toUpperCase()}</span></td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+}
+
+function renderAlerts(){
+  const list = document.getElementById('alerts_list');
+  const cnt  = document.getElementById('alert_count');
+  const badge = document.getElementById('alertsBadge');
+  if(cnt) cnt.textContent = state.alerts.length+' alerts';
+  if(badge){ badge.textContent=state.alerts.length; badge.className='badge'+(state.alerts.length>0?' show':''); }
+  if(!list) return;
+  if(state.alerts.length===0){
+    list.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px;font-size:13px">No alerts triggered.</div>';
+    return;
+  }
+  list.innerHTML = state.alerts.slice(0,20).map(a=>`
+    <div class="alert-item ${a.severity}">
+      <div class="alert-dot"></div>
+      <div>
+        <div class="alert-msg">${a.severity==='danger'?'🔴':'🟡'} ${a.msg} — <strong>${a.sensor}</strong></div>
+        <div class="alert-meta">${fmtTime(a.t)} · Temp ${a.temp.toFixed(1)}°C · Gas ${Math.round(a.gas)} ppm</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderAnalytics(){
+  const s = state.sensors;
+  // KPIs
+  const avgTemp = buf.temp.length?buf.temp.reduce((a,b)=>a+b,0)/buf.temp.length:0;
+  const peakGas = buf.gas.length?Math.max(...buf.gas):0;
+  const noiseEvts = buf.noise.filter(n=>n>state.thresholds.noise).length;
+  txt('an_avg_temp', avgTemp.toFixed(1)+'°C');
+  txt('an_peak_gas', Math.round(peakGas)+' ppm');
+  txt('an_noise_events', noiseEvts);
+  txt('an_total_alerts', state.alerts.length);
+
+  const tPct = clamp((s.temp-20)/(90-20)*100,0,100);
+  const gPct = clamp(s.gas/900*100,0,100);
+  const nPct = clamp(s.noise/6000*100,0,100);
+  txt('an_t_pct', tPct.toFixed(0)+'%');
+  txt('an_g_pct', gPct.toFixed(0)+'%');
+  txt('an_n_pct', nPct.toFixed(0)+'%');
+  const pbar=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=v.toFixed(0)+'%'};
+  pbar('an_t_bar', tPct); pbar('an_g_bar', gPct); pbar('an_n_bar', nPct);
+
+  drawChart({canvas:document.getElementById('an_temp_chart'), series:[buf.temp], colors:['rgba(0,255,163,.9)'], yDomain:[20,90], gridY:4});
+  drawChart({canvas:document.getElementById('an_gas_chart'),  series:[buf.gas],  colors:['rgba(255,204,0,.9)'],  yDomain:[0,900],  gridY:4});
+  drawChart({canvas:document.getElementById('an_noise_chart'),series:[buf.noise],colors:['rgba(176,127,255,.9)'],yDomain:[0,6000], gridY:3});
+}
+
+function renderAnalysis(){
+  const s = state.sensors;
+  const {risk, top, conf} = computeRisk(s.temp, s.gas, s.noise);
+  const n = buf.temp.length;
+  const window = Math.min(10, n-1);
+  const avg = arr => arr.slice(Math.max(0,n-1-window)).reduce((a,b)=>a+b,0)/(Math.min(window+1,arr.length)||1);
+  const tDelta = (s.noise - avg(buf.noise))*0.4 + (s.gas - avg(buf.gas))*0.3 + (s.temp - avg(buf.temp))*0.3;
+  const trend = tDelta > 0.1 ? '↑ INCREASING' : '↓ DECREASING';
+
+  txt('a_risk',  risk+'/100');
+  txt('a_trend', trend);
+  txt('a_factor',top);
+  txt('a_conf',  conf.toFixed(2));
+
+  const reco = document.getElementById('a_reco');
+  if(reco){
+    const lines = [];
+    if(s.gas>state.thresholds.gasCrit)     lines.push('🔴 <b>CRITICAL:</b> Gas exceeds critical threshold. Activate exhaust + evacuate zone.');
+    else if(s.gas>state.thresholds.gasWarn) lines.push('🟡 <b>WARNING:</b> Gas elevated. Enable fan relay and check for leaks.');
+    else lines.push('🟢 Gas levels are stable. Continue routine monitoring.');
+
+    if(s.temp>state.thresholds.tempCrit)     lines.push('🔴 <b>CRITICAL:</b> Temperature in danger zone. Shut down heat sources immediately.');
+    else if(s.temp>state.thresholds.tempWarn) lines.push('🟡 <b>WARNING:</b> Temperature elevated. Improve airflow and check cooling systems.');
+    else lines.push('🟢 Temperature is within safe operating range.');
+
+    if(s.noise>state.thresholds.noise) lines.push('🟡 Noise spike detected. Inspect machinery for abnormal vibration or bearing wear.');
+    else lines.push('🟢 Noise within acceptable range.');
+
+    reco.innerHTML = lines.map(l=>`<div style="margin-bottom:6px">${l}</div>`).join('');
+  }
+
+  drawChart({canvas:document.getElementById('ch_temp_gas'), series:[buf.gas,buf.temp], colors:['rgba(0,255,163,.9)','rgba(0,212,255,.85)'], yDomain:[0,900], gridY:4});
+  drawChart({canvas:document.getElementById('ch_noise'), series:[buf.noise], colors:['rgba(176,127,255,.9)'], yDomain:[0,6000], gridY:4});
+  drawChart({canvas:document.getElementById('ch_risk'), series:[buf.risk], colors:['rgba(255,65,85,.9)'], yDomain:[0,100], gridY:4});
+}
+
+function renderRTOS(){
+  const s = state.sensors;
+  const tasks = [
+    {name:'SensorTask',   prio:4, state:'RUNNING', stack:'3.2 KB', cpu: s.cpuUsage*0.28},
+    {name:'SecurityTask', prio:3, state:'BLOCKED', stack:'2.8 KB', cpu: s.cpuUsage*0.18},
+    {name:'SafetyTask',   prio:3, state:'BLOCKED', stack:'2.8 KB', cpu: s.cpuUsage*0.18},
+    {name:'CommTask',     prio:2, state:'READY',   stack:'4.0 KB', cpu: s.cpuUsage*0.22},
+    {name:'OledTask',     prio:1, state:'BLOCKED', stack:'2.0 KB', cpu: s.cpuUsage*0.06},
+    {name:'FirebaseTask', prio:2, state:'READY',   stack:'3.6 KB', cpu: s.cpuUsage*0.15},
+    {name:'IDLE',         prio:0, state:'READY',   stack:'1.2 KB', cpu: 100-s.cpuUsage},
+  ];
+  const container = document.getElementById('rtos_tasks');
+  if(container){
+    container.innerHTML = tasks.map(t=>{
+      const stateColor = t.state==='RUNNING'?'var(--neon)':t.state==='READY'?'var(--neon2)':'var(--muted)';
+      const barPct = clamp(t.cpu,0,100);
+      return `<div class="task-row">
+        <span class="mono" style="font-size:11px">${t.name}</span>
+        <span style="color:var(--muted)">${t.prio}</span>
+        <span style="color:${stateColor};font-size:11px">${t.state}</span>
+        <span style="color:var(--muted);font-size:11px">${t.stack}</span>
+        <div><div class="task-bar-bg"><div class="task-bar-fill" style="width:${barPct.toFixed(0)}%;background:${stateColor}"></div></div></div>
+      </div>`;
+    }).join('');
+  }
+  txt('rtos_ctx', Math.round(s.cpuUsage*12+50));
+  txt('ss_heap',  s.heapKB.toFixed(1)+' KB');
+  txt('ss_cpu',   s.cpuUsage.toFixed(1)+'%');
+  txt('ss_uptime',state.uptime+' s');
+  txt('ss_state', state.systemState.toUpperCase());
+
+  drawChart({canvas:document.getElementById('rtos_cpu_chart'), series:[buf.cpu], colors:['rgba(0,212,255,.9)'], yDomain:[0,100], gridY:4});
+  drawChart({canvas:document.getElementById('rtos_heap_chart'),series:[buf.heap], colors:['rgba(0,255,163,.9)'], yDomain:[50,220], gridY:4});
+}
+
+function renderDeviceConn(){
+  txt('dc_status',  state.online?'ONLINE':'OFFLINE');
+  txt('dc_broker',  '192.168.4.1:1883');
+  txt('dc_last_packet', state.lastPacketTime ? fmtTime(state.lastPacketTime) : '—');
+  txt('dc_packets', state.packetsRx);
+  const el=document.getElementById('dc_status');
+  if(el) el.style.color = state.online?'var(--neon)':'var(--danger)';
+}
+
+function renderAll(){
+  renderBadge();
+  renderDashboard();
+  renderLiveFeed();
+  renderHistory();
+  renderAlerts();
+  renderAnalytics();
+  renderAnalysis();
+  renderRTOS();
+  renderDeviceConn();
+}
+
+// ============================================================
+// CHART ENGINE
+// ============================================================
+function drawChart({canvas, series, colors, yDomain, gridY=4}){
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  const cssW = canvas.clientWidth || canvas.offsetWidth || 400;
+  const cssH = canvas.height || 180;
+  canvas.width  = cssW * dpr;
+  canvas.height = cssH * dpr;
+  ctx.scale(dpr, dpr);
+  const W=cssW, H=cssH;
+  ctx.clearRect(0,0,W,H);
+
+  const pL=42,pR=10,pT=10,pB=28;
+  const pw=W-pL-pR, ph=H-pT-pB;
+  const [yMin,yMax] = yDomain;
+
+  // Grid
+  ctx.strokeStyle='rgba(255,255,255,.06)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=gridY;i++){
+    const y=pT+ph*(i/gridY);
+    ctx.beginPath(); ctx.moveTo(pL,y); ctx.lineTo(pL+pw,y); ctx.stroke();
+  }
+  // Y labels
+  ctx.fillStyle='rgba(255,255,255,.38)';
+  ctx.font=`10px 'Space Mono',monospace`;
+  ctx.textAlign='right';
+  for(let i=0;i<=gridY;i++){
+    const v = yMax - (yMax-yMin)*(i/gridY);
+    const y = pT + ph*(i/gridY);
+    ctx.fillText(v>=1000?(v/1000).toFixed(1)+'k':Math.round(v), pL-6, y+4);
+  }
+
+  const n = series[0]?.length || 0;
+  if(n<2) return;
+  const xAt = i => pL + pw*i/(n-1);
+  const yAt = v => pT + ph*(1-clamp((v-yMin)/(yMax-yMin||1),0,1));
+
+  // Area fill under first series
+  ctx.save();
+  ctx.globalAlpha=0.08;
+  const grad = ctx.createLinearGradient(0,pT,0,pT+ph);
+  grad.addColorStop(0, colors[0]||'#00ff88');
+  grad.addColorStop(1,'transparent');
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  series[0].forEach((v,i)=>{ i===0?ctx.moveTo(xAt(i),yAt(v)):ctx.lineTo(xAt(i),yAt(v)); });
+  ctx.lineTo(xAt(n-1),pT+ph); ctx.lineTo(pL,pT+ph); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Lines
+  for(let s=0;s<series.length;s++){
+    const arr=series[s];
+    ctx.strokeStyle=colors[s]||'#fff';
+    ctx.lineWidth=1.8;
+    ctx.lineJoin='round';
+    ctx.beginPath();
+    arr.forEach((v,i)=>{ i===0?ctx.moveTo(xAt(i),yAt(v)):ctx.lineTo(xAt(i),yAt(v)); });
+    ctx.stroke();
+    // Last dot
+    const lv=arr[n-1], lx=xAt(n-1), ly=yAt(lv);
+    ctx.fillStyle=colors[s]||'#fff';
+    ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fill();
+  }
+}
+
+// ============================================================
+// ROUTING
+// ============================================================
+function setActive(route){
+  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.getAttribute('data-route')===route));
+  document.querySelectorAll('.foot-btn').forEach(b=>b.classList.toggle('active',b.getAttribute('data-route')===route));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.getAttribute('data-page')===route));
+  history.replaceState({},'','#'+route);
+}
+
+document.querySelectorAll('[data-route]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const r=btn.getAttribute('data-route');
+    if(r) setActive(r);
+  });
+});
+
+// ============================================================
+// WEBSOCKET — real ESP32 connection
+// ============================================================
+let ws = null;
+let wsReconnectTimer = null;
+let demoTimer = null;   // fallback sim when offline
+let renderTimer = null;
+
+// Config: read from Device Connection page inputs, or defaults
+function getWsUrl(){
+  const host = document.getElementById('cfg_broker')?.value?.trim() || '192.168.4.1';
+  const port = document.getElementById('cfg_port')?.value?.trim() || '81';
+  // Support ws:// prefix if user typed it; otherwise build from host:port
+  if(host.startsWith('ws://') || host.startsWith('wss://')) return host;
+  return `ws://${host}:${port}`;
+}
+
+function setConnectionStatus(status, msg){
+  // status: 'connecting' | 'online' | 'offline' | 'error'
+  const colors = { connecting:'var(--warn)', online:'var(--neon)', offline:'var(--muted)', error:'var(--danger)' };
+  const el = document.getElementById('dc_status');
+  if(el){ el.textContent = status.toUpperCase(); el.style.color = colors[status]||''; }
+  if(msg){
+    const log = document.getElementById('lv_json');
+    if(log) log.textContent = `[${fmtTime(new Date())}] ${msg}`;
+  }
+}
+
+function applyJsonToState(data){
+  // Map ESP32 JSON keys → state.sensors
+  // Accepts both snake_case and camelCase from ESP32 firmware
+  const s = state.sensors;
+  if(data.temp        != null) s.temp      = parseFloat(data.temp);
+  if(data.temperature != null) s.temp      = parseFloat(data.temperature);
+  if(data.gas         != null) s.gas       = parseFloat(data.gas);
+  if(data.noise       != null) s.noise     = parseFloat(data.noise);
+  if(data.pir         != null) s.motion    = parseInt(data.pir);
+  if(data.motion      != null) s.motion    = parseInt(data.motion);
+  if(data.door        != null) s.door      = parseInt(data.door);
+  if(data.vib         != null) s.vibration = parseInt(data.vib);
+  if(data.vibration   != null) s.vibration = parseInt(data.vibration);
+  if(data.buzzer      != null) s.buzzer    = parseInt(data.buzzer);
+  if(data.fan         != null) s.fanRelay  = parseInt(data.fan);
+  if(data.fan_relay   != null) s.fanRelay  = parseInt(data.fan_relay);
+  if(data.siren       != null) s.siren     = parseInt(data.siren);
+  if(data.exhaust     != null) s.exhaust   = parseInt(data.exhaust);
+  if(data.cpu         != null) s.cpuUsage  = parseFloat(data.cpu);
+  if(data.cpu_usage   != null) s.cpuUsage  = parseFloat(data.cpu_usage);
+  if(data.heap        != null) s.heapKB    = parseFloat(data.heap);
+  if(data.free_heap_kb!= null) s.heapKB    = parseFloat(data.free_heap_kb);
+  if(data.uptime      != null) state.uptime = parseInt(data.uptime);
+  if(data.state       != null) state.systemState = data.state;
+
+  // Derive systemState from thresholds if firmware doesn't send it
+  if(data.state == null){
+    const anom = s.gas>state.thresholds.gasWarn || s.temp>state.thresholds.tempWarn || s.noise>state.thresholds.noise;
+    const crit = s.gas>state.thresholds.gasCrit || s.temp>state.thresholds.tempCrit;
+    state.systemState = crit?'critical':anom?'warning':'normal';
+  }
+
+  // Push to ring buffers + history + alerts
+  const {risk} = computeRisk(s.temp, s.gas, s.noise);
+  pushBuf(s.temp,      buf.temp);
+  pushBuf(s.gas,       buf.gas);
+  pushBuf(s.noise,     buf.noise);
+  pushBuf(risk,        buf.risk);
+  pushBuf(s.cpuUsage,  buf.cpu);
+  pushBuf(s.heapKB,    buf.heap);
+
+  state.history.unshift({ t:new Date(), temp:s.temp, gas:s.gas, noise:s.noise,
+    motion:s.motion, door:s.door, vib:s.vibration, state:state.systemState });
+  if(state.history.length>60) state.history.pop();
+
+  const anom = s.gas>state.thresholds.gasWarn || s.temp>state.thresholds.tempWarn || s.noise>state.thresholds.noise;
+  const crit = s.gas>state.thresholds.gasCrit || s.temp>state.thresholds.tempCrit;
+  if(anom||crit){
+    const {top} = computeRisk(s.temp,s.gas,s.noise);
+    state.alerts.unshift({ id:Date.now(), t:new Date(),
+      severity:crit?'danger':'warning', sensor:top,
+      msg:crit?'Critical threshold breached':'Warning threshold reached',
+      temp:s.temp, gas:s.gas });
+    if(state.alerts.length>30) state.alerts.pop();
+  }
+
+  state.packetsRx++;
+  state.lastPacketTime = new Date();
+}
+
+/* ── HTTP polling (replaces WebSocket — WS not enabled in this build) ─────── */
+let _pollTimer  = null;
+let _pollFail   = 0;
+let _pollUrl    = '';
+
+function connectWS(){
+  if(_pollTimer) return;   /* already polling */
+  const host = document.getElementById('cfg_broker')?.value?.trim()
+               || location.hostname
+               || '192.168.4.1';
+  _pollUrl = `http://${host}/data`;
+  setConnectionStatus('connecting', `Connecting to ${_pollUrl} …`);
+  txt('dc_broker', _pollUrl);
+  _pollFail = 0;
+  _doPoll();
+}
+
+function _doPoll(){
+  fetch(_pollUrl, { cache: 'no-store' })
+    .then(r => { if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(data => {
+      _pollFail = 0;
+      if(!state.online){
+        state.online = true;
+        stopDemoMode();
+        setConnectionStatus('online', `Live — polling ${_pollUrl}`);
+        renderBadge();
+      }
+      applyJsonToState(data);
+      updateMLDisplay(state.sensors);
+      const pj = document.getElementById('lv_json');
+      if(pj) pj.textContent = JSON.stringify(data, null, 2);
+      renderAll();
+    })
+    .catch(() => {
+      _pollFail++;
+      if(_pollFail === 1){
+        state.online = false;
+        renderBadge();
+        setConnectionStatus('offline', `Cannot reach ${_pollUrl} — retrying…`);
+      }
+    })
+    .finally(() => {
+      _pollTimer = setTimeout(() => { _pollTimer = null; _doPoll(); }, 2000);
+    });
+}
+
+function disconnectWS(){
+  if(_pollTimer){ clearTimeout(_pollTimer); _pollTimer = null; }
+  state.online = false;
+  renderBadge();
+  setConnectionStatus('offline', 'Disconnected by user.');
+  startDemoMode();
+}
+
+function scheduleReconnect(){
+  /* no-op — _doPoll retries automatically every 2 s */
+}
+
+// ============================================================
+// OFFLINE STATE — show dashes, no fake data ever
+// ============================================================
+function stopDemoMode(){ /* no-op: demo removed */ }
+function startDemoMode(){ /* no-op: demo removed */ }
+
+function renderOffline(){
+  const dash = ['db_temp','db_gas','db_noise','db_risk',
+    'db_motion','db_door','db_vibration','db_rtc_time','db_rtc_date',
+    'db_cpu_pct','db_heap_pct','db_uptime',
+    'lv_temp','lv_gas','lv_noise','lv_cpu',
+    'ss_heap','ss_cpu','ss_uptime','ss_state',
+    'an_avg_temp','an_peak_gas','an_noise_events','an_total_alerts',
+    'a_risk','a_trend','a_factor','a_conf',
+    'dc_packets','dc_last_packet'];
+  dash.forEach(id => txt(id, '—'));
+  txt('db_uptime','Uptime: —');
+  txt('lv_temp_status','Waiting for ESP32…');
+  txt('lv_gas_status', 'Waiting for ESP32…');
+  txt('lv_noise_status','Waiting for ESP32…');
+  txt('lv_json','Not connected.\nConnect laptop/phone to WiFi: ESP32_ISMS_AP\nThen click the Connect button.');
+  txt('a_reco','Connect to ESP32 to see live recommendations.');
+  txt('db_state','System: WAITING FOR ESP32');
+  txt('db_banner_icon','⚪');
+
+  const banner = document.getElementById('db_banner');
+  if(banner) banner.className = 'sys-banner';
+
+  ['db_cpu_bar','db_heap_bar','an_t_bar','an_g_bar','an_n_bar'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.style.width='0%';
+  });
+  ['ch_buzzer','ch_fan','ch_btn1','ch_btn2'].forEach(id=>{
+    const c=document.getElementById(id); if(c) c.className='chip';
+  });
+
+  const rt = document.getElementById('rtos_tasks');
+  if(rt) rt.innerHTML='<div style="color:var(--muted);padding:20px;text-align:center;font-size:13px">Connect to ESP32 to see RTOS task data.</div>';
+  const tbody = document.getElementById('history_tbody');
+  if(tbody) tbody.innerHTML='<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:20px">No data — connect to ESP32 first.</td></tr>';
+  const al = document.getElementById('alerts_list');
+  if(al) al.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">No alerts — connect to ESP32 first.</div>';
+
+  ['lv_chart','an_temp_chart','an_gas_chart','an_noise_chart',
+   'ch_temp_gas','ch_noise','ch_risk','rtos_cpu_chart','rtos_heap_chart'].forEach(id=>{
+    const c=document.getElementById(id);
+    if(c){ c.width=c.offsetWidth||400; const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }
+  });
+
+  txt('alert_count','0 alerts');
+  const ab=document.getElementById('alertsBadge'); if(ab){ ab.textContent='0'; ab.className='badge'; }
+}
+
+// ============================================================
+// PUBLIC buttons
+// ============================================================
+function connectMQTT(){ connectWS(); }
+function disconnectMQTT(){ disconnectWS(); }
+function clearHistory(){ state.history=[]; renderHistory(); }
+function clearAlerts(){ state.alerts=[]; renderAlerts(); }
+
+document.getElementById('connectBtn')?.addEventListener('click', connectMQTT);
+
+// ============================================================
+// CLOCK (always runs from browser)
+// ============================================================
+function updateClock(){ txt('top-time', fmtTime(new Date())); }
+setInterval(updateClock, 1000);
+
+// Render loop — only fires when actually online
+setInterval(()=>{ if(state.online) renderAll(); }, 1000);
+
+// ============================================================
+// INIT — fully offline, zero fake data
+// ============================================================
+(()=>{
+  const hash = (location.hash||'#dashboard').slice(1);
+  setActive(hash||'dashboard');
+  updateClock();
+  renderBadge();
+  renderOffline();
+
+  // Auto-connect when page is served directly from ESP32
+  if(location.hostname === '192.168.4.1'){
+    txt('db_state','System: CONNECTING…');
+    setTimeout(connectWS, 600);
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ISMS Decision Tree — trained from datasets.csv (7 features → 6 classes)
+   Runs entirely in the browser; no server call needed.
+   ═══════════════════════════════════════════════════════════════════════════ */
+const ISMS_TREE = {
+  "leaf":false,"feature":"task_exec_time","threshold":149.5,
+  "left":{"leaf":true,"class":"Normal"},
+  "right":{
+    "leaf":false,"feature":"free_heap","threshold":15027.5,
+    "left":{
+      "leaf":false,"feature":"temperature","threshold":60.525,
+      "left":{
+        "leaf":false,"feature":"task_exec_time","threshold":358.5,
+        "left":{
+          "leaf":false,"feature":"gas_level","threshold":486.67,
+          "left":{"leaf":true,"class":"Degrading"},
+          "right":{"leaf":true,"class":"Risk"}
+        },
+        "right":{"leaf":true,"class":"Critical"}
+      },
+      "right":{
+        "leaf":false,"feature":"temp_rate_of_change","threshold":2.988,
+        "left":{
+          "leaf":false,"feature":"task_exec_time","threshold":350.0,
+          "left":{"leaf":true,"class":"Risk"},
+          "right":{"leaf":true,"class":"Critical"}
+        },
+        "right":{"leaf":true,"class":"Fire_Risk"}
+      }
+    },
+    "right":{
+      "leaf":false,"feature":"gas_level","threshold":509.31,
+      "left":{
+        "leaf":false,"feature":"temperature","threshold":68.59,
+        "left":{
+          "leaf":false,"feature":"cpu_usage","threshold":78.235,
+          "left":{
+            "leaf":false,"feature":"temp_rate_of_change","threshold":2.6585,
+            "left":{"leaf":true,"class":"Warning"},
+            "right":{"leaf":true,"class":"Risk"}
+          },
+          "right":{"leaf":true,"class":"Risk"}
+        },
+        "right":{"leaf":true,"class":"Risk"}
+      },
+      "right":{
+        "leaf":false,"feature":"temp_rate_of_change","threshold":2.4995,
+        "left":{"leaf":true,"class":"Risk"},
+        "right":{"leaf":true,"class":"Fire_Risk"}
+      }
+    }
+  }
+};
+
+/* Running state for derived features */
+let _mlPrevTemp     = null;
+let _mlTaskExecTime = 150;   /* ms — updated from RTOS perf data if available */
+const _mlStartTime  = Date.now();
+
+function mlPredict(sensors) {
+  const tempRateOfChange = (_mlPrevTemp !== null)
+    ? Math.abs(sensors.temp - _mlPrevTemp) : 0;
+  _mlPrevTemp = sensors.temp;
+  const runtimeHours = (Date.now() - _mlStartTime) / 3_600_000;
+
+  const feat = {
+    temperature:         sensors.temp       || 0,
+    gas_level:           sensors.gas        || 0,
+    temp_rate_of_change: tempRateOfChange,
+    cpu_usage:           sensors.cpuUsage   || 0,
+    task_exec_time:      _mlTaskExecTime,
+    free_heap:           (sensors.heapKB || 20) * 1024,  /* convert KB → bytes */
+    runtime_hours:       runtimeHours
+  };
+
+  let node = ISMS_TREE, depth = 0;
+  while (!node.leaf && depth < 20) {
+    node = feat[node.feature] <= node.threshold ? node.left : node.right;
+    depth++;
+  }
+  return { pred: node.class || 'Unknown', depth };
+}
+
+const ML_COLOR = {
+  Normal:    'var(--neon)',
+  Warning:   'var(--warn)',
+  Degrading: '#ff9900',
+  Risk:      'var(--danger)',
+  Critical:  'var(--danger)',
+  Fire_Risk: '#ff2200'
+};
+
+function updateMLDisplay(sensors) {
+  const { pred, depth } = mlPredict(sensors);
+  const el   = document.getElementById('ml_pred');
+  const conf = document.getElementById('ml_conf');
+  if (el) { el.textContent = pred; el.style.color = ML_COLOR[pred] || 'var(--text)'; }
+  if (conf) conf.textContent = `tree depth ${depth} ✓`;
+}
+/* ═══════════════════════════════════════════════════════════════════════════ */
+</script>
+</body>
+</html>

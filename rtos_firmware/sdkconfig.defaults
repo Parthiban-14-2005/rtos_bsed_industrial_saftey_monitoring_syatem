@@ -1,0 +1,7 @@
+# sdkconfig.defaults
+# Place this file in D:\rtos_firmware\rtos\ (project root, next to sdkconfig)
+# After placing it, run:  idf.py fullclean && idf.py build
+
+# Required for uxTaskGetSystemState() used in ISMS v8.0 RTOS metrics
+CONFIG_FREERTOS_USE_TRACE_FACILITY=y
+CONFIG_FREERTOS_USE_STATS_FORMATTING_FUNCTIONS=y
