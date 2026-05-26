@@ -1,4 +1,4 @@
-# rtos-bsed-industrial-monitoring-syatem
+# rtos_bsed_industrial_saftey_monitoring_syatem
 
 > A General project built with md, txt, jpeg, c
 
@@ -20,15 +20,15 @@
 ### Installation
 
 ```bash
-git clone https://github.com/user/rtos-bsed-industrial-monitoring-syatem.git
-cd rtos-bsed-industrial-monitoring-syatem
+git clone https://github.com/user/rtos_bsed_industrial_saftey_monitoring_syatem.git
+cd rtos_bsed_industrial_saftey_monitoring_syatem
 # See documentation
 ```
 
 ## Project Structure
 
 ```
-rtos-bsed-industrial-monitoring-syatem/
+rtos_bsed_industrial_saftey_monitoring_syatem/
 ├── src/
 ├── docs/
 ├── tests/
