@@ -285,6 +285,13 @@ flutter run
 
 ---
 
+## 👥 Team
+- Sakthi Raja V
+- Mohammed Zaheer K
+- Parthiban N
+
+---
+
 ## 🔮 Future Scope
 
 - Integration of **LSTM / CNN** deep learning for time-series anomaly prediction
